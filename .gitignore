@@ -1,0 +1,11 @@
+## Ignoring Unwanted Files
+node_modules
+.vscode
+npm-debug.log
+.serverless
+variables.env
+requests.http
+coverage
+.env
+.jshintrc
+.codecov.yml
