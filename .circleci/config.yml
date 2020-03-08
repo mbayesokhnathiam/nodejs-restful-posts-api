@@ -31,11 +31,4 @@ jobs:
       - store_artifacts:
           path: coverage
           prefix: coverage
-workflows:
-  version: 2
-  develop:
-    jobs:
-      - build:
-          filters:
-            branches:
-              only: dev       # only run builds when a push on dev branch happens
+   # only run builds when a push on dev branch happens
