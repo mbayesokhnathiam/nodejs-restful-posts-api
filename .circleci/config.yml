@@ -1,17 +1,41 @@
 version: 2.1
-orbs:
-  node: circleci/node@1.1.6
 jobs:
-  build-and-test:
-    executor:
-      name: node/default
+  build:
+    working_directory: ~/repo
+    docker:
+      # Docker images for node
+      - image: circleci/node:10.15.3
     steps:
       - checkout
-      - node/with-cache:
-          steps:
-            - run: npm install
-            - run: npm test
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      # Install all needed dependencies
+      - run:
+          name: Installing npm dependencies
+          command: npm install
+      # Run app commandss
+      - run:
+          name: Running app tests
+          command: npm test
+          
+      # Save the cache for faster builds
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      # Save test coverage results
+      - store_artifacts:
+          path: coverage
+          prefix: coverage
 workflows:
-    build-and-test:
-      jobs:
-        - build-and-test
+  version: 2
+  develop:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: dev       # only run builds when a push on dev branch happens
