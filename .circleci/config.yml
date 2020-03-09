@@ -19,8 +19,12 @@ jobs:
           command: npm install
       # Run app commandss
       - run:
-          name: Running app tests
-          command: npm start
+          name: Listing Directory
+          command: ls -l
+
+      - run:
+          name: Interactive
+          command: /bin/bash
           
       # Save the cache for faster builds
       - save_cache:
