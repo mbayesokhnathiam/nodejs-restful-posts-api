@@ -1,4 +1,5 @@
 require('dotenv').config(); // this is important!
+const Sequelize = require("sequelize");
 
 module.exports = {
   "development": {
@@ -7,7 +8,7 @@ module.exports = {
     "database": process.env.DATABASE_DEV,
     "host": process.env.DB_HOST,
     "dialect": process.env.DB_DIALECT,
-    "operatorsAliases": false
+    "operatorsAliases": Sequelize.Op
   },
   "test": {
     "username": process.env.DB_USERNAME,
@@ -15,7 +16,7 @@ module.exports = {
     "database": process.env.DATABASE_TEST,
     "host": process.env.DB_HOST,
     "dialect": process.env.DB_DIALECT,
-    "operatorsAliases": false
+    "operatorsAliases": Sequelize.Op
   },
   "production": {
     "username": process.env.DB_USERNAME,
@@ -23,6 +24,6 @@ module.exports = {
     "database": process.env.DATABASE_PROD,
     "host": process.env.DB_HOST,
     "dialect": process.env.DB_DIALECT,
-    "operatorsAliases": false
+    "operatorsAliases": Sequelize.Op
   }
 };

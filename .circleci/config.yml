@@ -20,7 +20,7 @@ jobs:
       # Run app commandss
       - run:
           name: Running app tests
-          command: npm test
+          command: npm start
           
       # Save the cache for faster builds
       - save_cache:

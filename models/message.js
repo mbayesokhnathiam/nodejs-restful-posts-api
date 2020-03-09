@@ -7,11 +7,12 @@ module.exports = (sequelize, DataTypes) => {
     attachment: DataTypes.STRING,
     likes: DataTypes.INTEGER
   }, {});
-  Message.associate = function(models) {
+  Message.associate = function (models) {
     // associations can be defined here
-    models,Message.belongsTo(models.User,{
-      foreignKey:{
-        allowNull:false
+    models,
+    Message.belongsTo(models.User, {
+      foreignKey: {
+        allowNull: false
       }
     })
   };

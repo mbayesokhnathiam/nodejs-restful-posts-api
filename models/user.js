@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     bio: DataTypes.STRING,
     isAdmin: DataTypes.BOOLEAN
   }, {});
-  User.associate = function(models) {
+  User.associate = function (models) {
     // associations can be defined here
     models.User.hasMany(models.Message);
   };

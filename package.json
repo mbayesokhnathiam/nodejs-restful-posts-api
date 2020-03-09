@@ -4,7 +4,7 @@
   "description": "RestFul Api NodeJs",
   "main": "server.js",
   "scripts": {
-    "start" : "node server.js",
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -21,6 +21,7 @@
     "express-validator": "^6.4.0",
     "jsonwebtoken": "^8.5.1",
     "mysql": "^2.18.1",
-    "sequelize": "^3.35.1"
+    "mysql2": "^2.1.0",
+    "sequelize": "^4.13.7"
   }
 }
