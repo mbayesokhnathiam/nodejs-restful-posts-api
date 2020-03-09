@@ -24,7 +24,7 @@ jobs:
 
       - run:
           name: Interactive
-          command: node
+          command: node --version
           
       # Save the cache for faster builds
       - save_cache:
