@@ -24,7 +24,7 @@ jobs:
 
       - run:
           name: Interactive
-          command: /bin/bash
+          command: node
           
       # Save the cache for faster builds
       - save_cache:
