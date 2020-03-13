@@ -3,6 +3,8 @@ var bcrypt = require('bcrypt');
 var jwt = require('../util/jwt');
 var models = require('../models');
 
+var asyncLib = require('async');
+
 
 //Constantes
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -49,23 +51,46 @@ module.exports = {
             });
         }
 
-        models.User.findOne({
-            where: {
-                [Op.or]: [{
-                    email: {
-                        [Op.eq]: email
-                    }
-                }, {
-                    username: {
-                        [Op.eq]: username
-                    }
-                }]
-            }
-        }).then((userFound) => {
+        asyncLib.waterfall(
+            [
+                function(done){
+                    models.User.findOne({
+                        where: {
+                            [Op.or]: [{
+                                email: {
+                                    [Op.eq]: email
+                                }
+                            }, {
+                                username: {
+                                    [Op.eq]: username
+                                }
+                            }]
+                        }
+                    }).then((userFound) => {
+            
+                        done(null,userFound);
+            
+                    }).catch((err) => {
+                        return res.status(500).json({
+                            'error': 'impossible de verifier cet utilisateur'
+                        });
+                    });
+                }
+                ,
+                function(userFound,done){
+                    if (!userFound) {
 
-            if (!userFound) {
-
-                bcrypt.hash(password, 5, (err, bcryptedPassword) => {
+                        bcrypt.hash(password, 5, (err, bcryptedPassword) => {
+                            done(null,userFound,bcryptedPassword);
+                        });
+        
+                    } else {
+                        return res.status(409).json({
+                            'error': 'Cet utlisateur existe déjà !'
+                        });
+                    }
+                },
+                function(userFound,bcryptedPassword,done){
                     var newUser = models.User.create({
                         email: email,
                         username: username,
@@ -74,27 +99,27 @@ module.exports = {
                         isAdmin: 0
 
                     }).then((newUser) => {
-                        return res.status(201).json({
-                            'idUser': newUser.id
-                        });
+                        done(newUser);
                     }).catch((err) => {
                         return res.status(500).json({
                             'error': 'Probleme d\'ajout de l\'utilisateur'
                         });
                     });
-                });
+                }
+            ]
+            ,function(newUser){
 
-            } else {
-                return res.status(409).json({
-                    'error': 'Cet utlisateur existe déjà !'
-                });
-            }
+                if(!newUser){
+                    return res.status(201).json({
+                        'idUser': newUser.id
+                    });
+                }else{
+                    return res.status(500).json({
+                        'error': 'Probleme d\'ajout de l\'utilisateur'
+                    });
+                }
 
-        }).catch((err) => {
-            return res.status(500).json({
-                'error': 'impossible de verifier cet utilisateur'
             });
-        });
 
     },
     login: (req, res) => {
@@ -109,39 +134,132 @@ module.exports = {
             });
         }
 
+        asyncLib.waterfall([
+            (done) => {
+                models.User.findOne({
+                    where: {
+                        email: email
+                    }
+                }).then((userFound) => {
+                    done(null,userFound);
+                }).catch((err) => {
+                    return res.status(500).json({
+                        'error': 'Impossible de verifier cet utilisateur'
+                    });
+                });
+            },
+
+            (userFound,done) => {
+                if (userFound) {
+
+                    bcrypt.compare(password, userFound.password, (errBcrypt, resBcrypt) => {
+    
+                        done(null,userFound,resBcrypt);
+                    });
+    
+                } else {
+                    return res.status(404).json({
+                        'error': 'Cet utilisateur n\'existe pas dans la base de données'
+                    });
+                }
+            }
+            ,
+
+            (userFound,resBcrypt,done) => {
+                if (resBcrypt) {
+                    done(userFound);
+                } else {
+                    return res.status(403).json({
+                        'error': 'Le mot de passe est invalide'
+                    });
+                }
+            }
+        ],
+            (userFound) => {
+                if(userFound){
+
+                    return res.status(200).json({
+                        'isUser': userFound.id,
+                        'token': jwt.generateTokenforUser(userFound)
+                    });
+                } else {
+                    return res.status(403).json({
+                        'error': 'Le mot de passe est invalide'
+                    });
+                }
+            });
+
+
+    },
+
+    getUserProfile: function(req,res){
+        let headerAuth = req.headers['authorization'];
+
+        let userId = jwt.getUserId(headerAuth);
+
+        if(userId<0){
+            return res.status(400).json({'error':'wrong token'});
+        }
 
         models.User.findOne({
-            where: {
-                email: email
+            attributes:['id','email','username','bio'],
+            where:{id:userId}
+        }).then((user) => {
+            if(user){
+                return res.status(201).json(user);
+            }else{
+                return res.status(404).json({'error':'user not found'});
             }
-        }).then((userFound) => {
-
-            if (userFound) {
-
-                bcrypt.compare(password, userFound.password, (errBcrypt, resBcrypt) => {
-
-                    if (resBcrypt) {
-                        return res.status(200).json({
-                            'isUser': userFound.id,
-                            'token': jwt.generateTokenforUser(userFound)
-                        });
-                    } else {
-                        return res.status(403).json({
-                            'error': 'Le mot de passe est invalide'
-                        });
-                    }
-                });
-
-            } else {
-                return res.status(404).json({
-                    'error': 'Cet utilisateur n\'existe pas dans la base de données'
-                });
-            }
-
-        }).catch((err) => {
-            return res.status(500).json({
-                'error': 'Impossible de verifier cet utilisateur'
-            });
+        }).catch((error) => {
+            return res.status(500).json({'error':'cannot fetch user'});
         });
+    },
+    updateUser: (req,res) => {
+        let headerAuth = req.headers['authorization'];
+
+        var userId = jwt.getUserId(headerAuth);
+
+        var bio = req.body.bio;
+
+        asyncLib.waterfall([
+
+            (done) => {
+                
+                models.User.findOne({
+                    attributes:['id','bio'],
+                    where: {
+                        id : userId
+                    }
+                }).then((userUpdate) => {
+                    done(null,userUpdate);
+                }).catch((error) => {
+                    return res.status(404).json({'error':'User not found'});
+                    
+                });
+            },
+
+            (userUpdate,done) => {
+                if(userUpdate){
+                    userUpdate.update({
+                        bio: (bio ? bio : userUpdate.bio)
+                    }).then( (userUpdate) => {
+                        done(userUpdate);
+                    }).catch( (error) => {
+                        res.status(500).json({'error':'cannot to update user'});
+                    })
+                }else{
+                    res.status(404).json({'error' : 'user not found'});
+                }
+            }
+
+        ], (userUpdate) => {
+            if(userUpdate){
+                res.status(201).json(userUpdate);
+            }else{
+                res.status(500).json({'error' : 'cannot update user'});
+            }
+        });
+
+        
     }
 }

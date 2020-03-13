@@ -25,6 +25,6 @@ server.get('/',(req,res)=>{
 
 server.use(baseURL,apiRouter);
 //Launch server
-server.listen(port,()=>{
+server.listen(port,() => {
     console.log(`Le server a demarrer sur le port ${port}`);
 });

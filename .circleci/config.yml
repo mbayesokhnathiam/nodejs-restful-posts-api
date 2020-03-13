@@ -35,4 +35,4 @@ jobs:
       - store_artifacts:
           path: coverage
           prefix: coverage
-   # only run builds when a push on dev branch happens
+   # only run buinlds when a push on dev branch happens
