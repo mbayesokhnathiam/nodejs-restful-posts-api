@@ -74,6 +74,7 @@ module.exports = {
                         return res.status(500).json({
                             'error': 'impossible de verifier cet utilisateur'
                         });
+                        
                     });
                 }
                 ,
@@ -104,12 +105,14 @@ module.exports = {
                         return res.status(500).json({
                             'error': 'Probleme d\'ajout de l\'utilisateur'
                         });
+                        
+                        
                     });
                 }
             ]
             ,function(newUser){
 
-                if(!newUser){
+                if(newUser){
                     return res.status(201).json({
                         'idUser': newUser.id
                     });
@@ -117,6 +120,7 @@ module.exports = {
                     return res.status(500).json({
                         'error': 'Probleme d\'ajout de l\'utilisateur'
                     });
+                    
                 }
 
             });
