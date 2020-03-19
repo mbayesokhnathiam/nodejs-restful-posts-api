@@ -126,6 +126,6 @@ module.exports = {
             //On renvoie un message
             res.status(500).json({'error' : 'Invalid fields'})
 
-        })
+        });
     }
 }
